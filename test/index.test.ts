@@ -1,5 +1,5 @@
-import { describe, expect, test } from '@jest/globals';
-import { Dependency, Autowrite } from '../src/index';
+import { describe, expect, test } from 'vitest';
+import { Dependency, Autowrite } from '../src';
 
 describe('test ioc', () => {
   const uniqueId = 'x2'
@@ -24,7 +24,6 @@ describe('test ioc', () => {
   });
   test('验证属性 Autowrite by UniqueId', () => {
     const i = new Inject()
-    debugger
     expect(i.t1.log()).toBe(1)
   });
 });

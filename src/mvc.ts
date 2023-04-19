@@ -4,6 +4,19 @@ const TKEY = 'design:type'
 const PKEY = 'design:paramtypes'
 const RKEY = 'design:returntype'
 
+type RequestMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'OPTIONS' | 'HEAD' | 'DELETE'
+
+
+const controllers = new Set<Function>()
+const paths: Record<RequestMethod, any> = {
+  'GET': {},
+  'POST': {},
+  'PUT': {},
+  'PATCH': {},
+  'OPTIONS': {},
+  'HEAD': {},
+  'DELETE': {}
+}
 //#region Decorators
 /**
  * 控制器，控制器
@@ -12,7 +25,7 @@ const RKEY = 'design:returntype'
  */
 export function Controller(): ClassDecorator {
   return function (target: Function) {
-
+    controllers.add(target)
   }
 }
 // export function FromBody(): ParameterDecorator { }
@@ -21,10 +34,12 @@ export function Controller(): ClassDecorator {
 // export function FromQuery(): ParameterDecorator { }
 // export function FromRoute(): ParameterDecorator { }
 // export function HttpDelete(): MethodDecorator { }
-export function HttpGet(): MethodDecorator {
+export function HttpGet(route?: string): MethodDecorator {
   return function (target: Object, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<any>) {
-    Reflect.defineMetadata('', '', target)
-    Reflect.getMetadata(TKEY, target, propertyKey)
+    // Reflect.defineMetadata('', '', target)
+    // Reflect.getMetadata(TKEY, target, propertyKey)
+    // console.log(Reflect.getMetadataKeys(target))
+    // paths.GET.set(target)
     return descriptor
   }
 }
@@ -44,3 +59,5 @@ export abstract class ControllerBase {
 }
 
 // #endif
+
+// export s from ''
