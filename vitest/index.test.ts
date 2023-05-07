@@ -1,8 +1,8 @@
-// import { describe, expect, test } from 'vitest';
-import { describe, expect, test } from '@jest/globals';
+import "reflect-metadata";
+import { describe, expect, test } from 'vitest';
 import { Dependency, Autowrite } from '../src';
 
-describe('test ioc', () => {
+describe('test ioc 2', () => {
   const uniqueId = 'x2'
   interface ITest {
     log(): number

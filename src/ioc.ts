@@ -85,8 +85,11 @@ export function Autowrite(opts?: {
 }): PropertyDecorator {
   const { uniqueId } = { ...opts }
   return function (target: Object, propertyKey: string | symbol) {
-    const cls: Function = Reflect.getMetadata(TKEY, target);
-    console.log('cls2', cls)
+    const cls: Function = Reflect.getMetadata(TKEY, target, propertyKey);
+    Reflect.defineMetadata('1232', 111, target, propertyKey)
+    console.log('*****************')
+    console.log('cls2', cls, Reflect.getMetadataKeys(target, propertyKey))
+    console.log('*****************')
     Reflect.defineProperty(target, propertyKey, {
       get() {
         if (container.has(cls)) return container.get(cls)?.instance()
