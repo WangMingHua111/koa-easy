@@ -23,7 +23,7 @@ const paths: Record<RequestMethod, any> = {
  * @param route 
  * @returns 
  */
-export function Controller(): ClassDecorator {
+export function Controller(route?: string): ClassDecorator {
   return function (target: Function) {
     controllers.add(target)
   }
@@ -54,9 +54,7 @@ export function HttpGet(route?: string): MethodDecorator {
 // #endif
 
 //#region Class
-export abstract class ControllerBase {
-  abstract AAA(): void
-}
+export abstract class ControllerBase {}
 
 // #endif
 
