@@ -2,14 +2,14 @@
 import { describe, expect, test } from "@jest/globals";
 import Koa from "koa";
 import ip from "ip";
-import Launcher,{
+import {
+  Middleware,
   Dependency,
   Autowrite,
   ControllerBase,
   Controller,
   HttpGet,
 } from "../src";
-import 
 
 // describe("test ioc", () => {
 //   const uniqueId = "x2";
@@ -53,14 +53,14 @@ describe("test mvc", () => {
   }
 
   const app = new Koa();
-  app.use(Launcher)
+  app.use(Middleware)
   const server = app.listen(3000);
   console.log(`服务启动成功`);
   console.log(`http://${ip.loopback()}:${3000}`);
   console.log(`http://${ip.address()}:${3000}`);
 
   test("读取Get请求", async () => {
-    // const d = await fetch("http://localhost:3000/test/g1");
+    const d = await fetch("http://localhost:3000/test/g1");
     // const d = await fetch('https://test.wangminghua.com/url.txt')
     // console.log(d.text())
   });
