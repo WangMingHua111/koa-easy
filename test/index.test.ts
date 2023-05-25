@@ -47,8 +47,9 @@ describe("test mvc", () => {
   @Controller("test")
   class TestController extends ControllerBase {
     @HttpGet("g1")
-    public g1() {
-      return `date:${new Date().toLocaleTimeString()}`;
+    public g1(ctx) {
+      ctx.body = `date:${new Date().toLocaleTimeString()}`
+      // return `date:${new Date().toLocaleTimeString()}`;
     }
   }
 

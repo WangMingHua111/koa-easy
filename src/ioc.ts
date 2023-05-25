@@ -1,40 +1,11 @@
 import "reflect-metadata";
+import { IScopeService, TransientScopeService, SingletonScopeService, Lifecycle } from './utils'
 
 const TKEY = 'design:type'
 const PKEY = 'design:paramtypes'
 const RKEY = 'design:returntype'
 
-interface IScopeService {
-  readonly cls: Function;
-  instance(): any
-}
-
-class TransientScopeService implements IScopeService {
-  cls: Function
-  constructor(cls: Function) {
-    this.cls = cls
-  }
-  instance() {
-    return Reflect.construct(this.cls, [])
-  }
-}
-class SingletonScopeService implements IScopeService {
-  cls: Function
-  ins: any
-  constructor(cls: Function) {
-    this.cls = cls
-  }
-  instance() {
-    if (!this.ins) this.ins = Reflect.construct(this.cls, [])
-    return this.ins
-  }
-}
 const container = new Map<Function | String, IScopeService>()
-
-/**
- * 依赖生命周期
- */
-export type Lifecycle = 'transient' | 'singleton'
 
 /**
  * 装饰器：依赖
