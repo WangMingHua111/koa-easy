@@ -45,7 +45,9 @@ export function Controller(route?: string): ClassDecorator {
 export function HttpGet(route?: string): MethodDecorator {
   return function (target: Object, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<any>) {
     Reflect.defineMetadata(MVC_METHOD, `GET:${new String(propertyKey)}`, target)
-    router.get(`test/${route}`, async (ctx: Context, next: Next) => {
+    // console.log(`/test/${route}`)
+    router.get(`/test/${route}`, async (ctx: Context, next: Next) => {
+      console.log(`test ${new Date().toLocaleString()}`)
       ctx.body = '' + new Date().toLocaleString()
       return await next()
     })
@@ -64,7 +66,7 @@ export function HttpGet(route?: string): MethodDecorator {
 //#region Class
 export abstract class ControllerBase { }
 
-const m = router.routes()
+
 /**
  * Koa 中间件
  * @param this 
@@ -72,9 +74,13 @@ const m = router.routes()
  * @param next 
  */
 export function Middleware() {
-  // return compose(router.routes(), router.allowedMethods())
+  const routers = router.routes()
+  const allowedMethods = router.allowedMethods()
+  const dispatch = (ctx: any, next: Next) =>{
+    // debugger
+    return compose([routers, allowedMethods])(ctx, next)
+  }
+  return dispatch
 }
 
 // #endif
-
-// export s from ''
