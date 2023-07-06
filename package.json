@@ -4,7 +4,7 @@
   "description": "Koa2 快速mvc框架",
   "main": "./dist/index.cjs.js",
   "module": "./dist/index.es.js",
-  "types": "./dist/types/index.d.ts",
+  "types": "./dist/index.d.ts",
   "scripts": {
     "build": "rimraf -rf ./dist && rollup --config",
     "jest": "jest"
