@@ -3,10 +3,9 @@ import { describe, expect, test } from "@jest/globals";
 import Koa from "koa";
 import ip from "ip";
 import {
-  Middleware,
+  KoaEasy,
   Dependency,
   Autowrite,
-  ControllerBase,
   Controller,
   HttpGet,
 } from "../src";
@@ -45,7 +44,7 @@ import {
 
 describe("test mvc", () => {
   @Controller("test")
-  class TestController extends ControllerBase {
+  class TestController{
     @HttpGet("g1")
     public g1(ctx) {
       ctx.body = `date:${new Date().toLocaleTimeString()}`
@@ -54,7 +53,7 @@ describe("test mvc", () => {
   }
 
   const app = new Koa();
-  app.use(Middleware())
+  app.use(KoaEasy())
   const server = app.listen(3000);
   console.log(`服务启动成功`);
   console.log(`http://${ip.loopback()}:${3000}`);

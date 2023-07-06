@@ -6,7 +6,7 @@
   "module": "./dist/index.es.js",
   "types": "./dist/types/index.d.ts",
   "scripts": {
-    "build": "rimraf -rf ./dist && rollup --config && tsc",
+    "build": "rimraf -rf ./dist && rollup --config",
     "jest": "jest"
   },
   "files": [
@@ -21,6 +21,7 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "@rollup/plugin-commonjs": "^22.0.2",
+    "@rollup/plugin-json": "^6.0.0",
     "@rollup/plugin-node-resolve": "^14.1.0",
     "@rollup/plugin-typescript": "^8.5.0",
     "@types/jest": "^29.5.0",
