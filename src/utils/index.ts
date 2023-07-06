@@ -15,8 +15,10 @@ export class TransientScopeService implements IScopeService {
 export class SingletonScopeService implements IScopeService {
   cls: Function
   ins: any
-  constructor(cls: Function) {
+  constructor(cls: Function, immediate = false) {
     this.cls = cls
+    // 立即生成实例
+    if(immediate) this.instance()
   }
   instance() {
     if (!this.ins) this.ins = Reflect.construct(this.cls, [])

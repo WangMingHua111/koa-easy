@@ -18,7 +18,7 @@ export function Dependency(opts?: {
   /**
    * 注入依赖的唯一ID
    */
-  uniqueId?: string,
+  uniqueId?: string
   /**
    * 生命周期
    */
@@ -27,13 +27,18 @@ export function Dependency(opts?: {
    * 依赖别名类型
    */
   alias?: Array<Function>
+  /**
+   * 为 true 时，ScopeService 立即生成 instance 实例，仅 lifecycle = 'singleton' 时有效。
+   * @default false
+   */
+  immediate?: boolean
 }): ClassDecorator {
-  const { uniqueId, alias = [], lifecycle = 'singleton' } = { ...opts }
+  const { uniqueId, alias = [], lifecycle = 'singleton', immediate = false } = { ...opts }
   return function (target: Function) {
     let service: IScopeService
     switch (lifecycle) {
       case "singleton":
-        service = new SingletonScopeService(target)
+        service = new SingletonScopeService(target, immediate)
         break;
       case "transient":
       default:
@@ -89,7 +94,7 @@ namespace Mvc {
     }
     return Reflect.getMetadata(MVC_METHOD, target.constructor)
   }
-  
+
 }
 
 //#region Mvc
@@ -183,9 +188,9 @@ export function KoaEasy() {
           // 获取控制器示例
           const instance = controller.instance()
           // 获取控制器方法
-          const fn = instance[propertyKey]
-          // 调用
-          return fn?.(ctx, next)
+          const fn = instance[propertyKey] as Function | undefined
+          // 调用，通过bind设置上下文
+          return fn?.bind(instance)(ctx, next)
         })
       })
     }
