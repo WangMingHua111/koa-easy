@@ -32,7 +32,14 @@ export default defineConfig({
     commonjs(),
     babel(),
     typescript({
-      tsconfig: './tsconfig.json'
+      module: 'es2020',
+      sourceMap: false,
+      compilerOptions: {
+          paths: {
+              '@/*': ['./src/*'],
+          },
+          declaration: false,
+      },
     }),
 
     resolve(),
