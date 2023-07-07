@@ -165,16 +165,27 @@ export function HttpPut(route?: string): MethodDecorator {
     Mvc.getRecordMethods(target).put.push({ route, propertyKey })
   }
 }
+type KoaEasyOptions = {
+  logs?: boolean
+}
 /**
  * Koa 中间件
  * @param this 
  * @param ctx 
  * @param next 
  */
-export function KoaEasy() {
-  const join = (...args: string[]): string => {
-    return args.map(str => str.startsWith('/') ? str : '/' + str).join('')
+export function KoaEasy(options?: KoaEasyOptions) {
+  const opts: KoaEasyOptions = {
+    logs: false,
+    ...options
   }
+  const join = (...args: string[]): string => {
+    return args.filter(str => str).map(str => str.startsWith('/') ? str : '/' + str).join('')
+  }
+  const isNullOrUndefined = (route: string | undefined | null) => {
+    return route === undefined || route === null
+  }
+  const log = opts.logs ? console.log : undefined
 
   for (const controller of Mvc.controllers) {
     const prefix = Reflect.getMetadata(Mvc.MVC_CONTROLLER, controller.cls)
@@ -183,7 +194,8 @@ export function KoaEasy() {
       const key = property as RequestMethod
       const arr = methods[key]
       arr.forEach(({ route, propertyKey }) => {
-        const path = join(prefix, route || propertyKey)
+        const path = join(prefix, isNullOrUndefined(route) ? propertyKey : route as string)
+        log?.(`${property} ${path}`)
         Mvc.router[property as RequestMethod](join(path), (ctx: Context, next: Next) => {
           // 获取控制器示例
           const instance = controller.instance()
