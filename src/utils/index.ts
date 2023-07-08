@@ -18,7 +18,7 @@ export class SingletonScopeService implements IScopeService {
   constructor(cls: Function, immediate = false) {
     this.cls = cls
     // 立即生成实例
-    if(immediate) this.instance()
+    if (immediate) this.instance()
   }
   instance() {
     if (!this.ins) this.ins = Reflect.construct(this.cls, [])

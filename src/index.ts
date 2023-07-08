@@ -4,17 +4,14 @@ import { Context, Next } from "koa";
 import compose from 'koa-compose'
 import Router from '@koa/router'
 
+// 导出所有服务
+export * from './services/cache-service'
+
 //#region Ioc
 namespace Ioc {
   export const container = new Map<Function | String, IScopeService>()
 }
-
-/**
- * 装饰器：依赖
- * @param lifecycle 生命周期
- * @returns 
- */
-export function Dependency(opts?: {
+export type DependencyOptions = {
   /**
    * 注入依赖的唯一ID
    */
@@ -32,7 +29,14 @@ export function Dependency(opts?: {
    * @default false
    */
   immediate?: boolean
-}): ClassDecorator {
+}
+
+/**
+ * 装饰器：依赖
+ * @param lifecycle 生命周期
+ * @returns 
+ */
+export function Dependency(opts?: DependencyOptions): ClassDecorator {
   const { uniqueId, alias = [], lifecycle = 'singleton', immediate = false } = { ...opts }
   return function (target: Function) {
     let service: IScopeService
@@ -49,6 +53,20 @@ export function Dependency(opts?: {
     alias.push(target)
     alias.forEach(func => Ioc.container.set(func, service));
   }
+}
+/**
+ * 添加依赖
+ */
+export function AddDependency(dep: Object, opts?: Pick<DependencyOptions, 'uniqueId' | 'alias'>) {
+  const { uniqueId, alias = [] } = { ...opts }
+  const target: Function = dep.constructor
+  // 创建一个单例服务
+  let service = new SingletonScopeService(target)
+  // 直接设置实例，不再有 SingletonScopeService 自动创建
+  service.ins = dep
+  if (uniqueId) Ioc.container.set(uniqueId, service)
+  alias.push(target)
+  alias.forEach(func => Ioc.container.set(func, service));
 }
 
 /**
