@@ -1,6 +1,6 @@
 {
   "name": "@wangminghua/koa-easy",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "Koa2 快速mvc框架",
   "main": "./dist/index.cjs.js",
   "module": "./dist/index.es.js",

@@ -124,9 +124,10 @@ type RecordMethods = { [key in RequestMethod]: Array<{ route?: string, propertyK
 /**
  * 控制器，控制器
  * @param route 
+ * @param lifecycle 默认值：transient
  * @returns 
  */
-export function Controller(route?: string, lifecycle: Lifecycle = 'singleton'): ClassDecorator {
+export function Controller(route?: string, lifecycle: Lifecycle = 'transient'): ClassDecorator {
   return function (target: Function) {
     Reflect.defineMetadata(Mvc.MVC_CONTROLLER, route || target.name.replace(/Controller$/i, ''), target)
     let service: IScopeService
@@ -379,6 +380,20 @@ export function FromBody(options?: BodyParserOptions): ParameterDecorator {
 type KoaEasyOptions = {
   logs?: boolean
 }
+
+/**
+ * BaseController
+ */
+export abstract class BaseController {
+  public _ctx!: Context
+
+  public ok(data: any): void {
+    this._ctx.response.status = 200
+    this._ctx.response.body = data
+  }
+  // todo 401 403 500 等
+}
+
 /**
  * Koa 中间件
  * @param this 
@@ -426,6 +441,8 @@ export function KoaEasy(options?: KoaEasyOptions) {
             }
             args.splice(index, 1, value)
           }
+          // 尽量使用瞬态实例，避免上下文混乱
+          if (instance instanceof BaseController) instance._ctx = ctx
           // 调用，通过bind设置上下文
           return fn?.apply(instance, args)
         })
