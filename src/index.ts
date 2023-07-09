@@ -380,18 +380,44 @@ export function FromBody(options?: BodyParserOptions): ParameterDecorator {
 type KoaEasyOptions = {
   logs?: boolean
 }
-
+/**
+ * 内部的Http便捷方法
+ */
+class InnerHttp {
+  public ctx: Context
+  constructor(ctx: Context) {
+    this.ctx = ctx
+  }
+  public ok(data?: any): void {
+    this.ctx.response.status = 200
+    this.ctx.response.body = data
+  }
+  public bad(data?: any): void {
+    this.custom(400, data)
+  }
+  public unauthorized(data?: any) {
+    this.custom(401, data)
+  }
+  public forbidden(data?: any) {
+    this.custom(403, data)
+  }
+  public custom(status: number, data?: any) {
+    this.ctx.response.status = status
+    if (data !== undefined) this.ctx.response.body = data
+  }
+  // todo 401 403 500 等
+}
 /**
  * BaseController
  */
 export abstract class BaseController {
-  public _ctx!: Context
+  private _http!: InnerHttp
 
-  public ok(data: any): void {
-    this._ctx.response.status = 200
-    this._ctx.response.body = data
+  get http() {
+    return this._http
   }
-  // todo 401 403 500 等
+
+
 }
 
 /**
@@ -442,7 +468,9 @@ export function KoaEasy(options?: KoaEasyOptions) {
             args.splice(index, 1, value)
           }
           // 尽量使用瞬态实例，避免上下文混乱
-          if (instance instanceof BaseController) instance._ctx = ctx
+          if (instance instanceof BaseController) {
+            Object.assign(instance, { _http: new InnerHttp(ctx) })
+          }
           // 调用，通过bind设置上下文
           return fn?.apply(instance, args)
         })
