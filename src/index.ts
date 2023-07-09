@@ -18,6 +18,7 @@ export type DependencyOptions = {
   uniqueId?: string
   /**
    * 生命周期
+   * @default 'singleton''
    */
   lifecycle?: Lifecycle
   /**
