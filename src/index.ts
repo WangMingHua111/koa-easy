@@ -3,7 +3,7 @@ import { IScopeService, TransientScopeService, SingletonScopeService, Lifecycle 
 import { Context, Next } from "koa";
 import compose from 'koa-compose'
 import Router from '@koa/router'
-
+import { bodyParser } from '@koa/bodyparser'
 // 导出所有服务
 export * from './services/cache-service'
 
@@ -96,6 +96,7 @@ namespace Mvc {
   export const router = new Router()
   export const MVC_CONTROLLER = 'mvc:controller'
   export const MVC_METHOD = 'mvc:method'
+  export const MVC_PARAMETER = 'mvc:parameter'
   export const controllers = new Set<IScopeService>()
   export const getRecordMethods = (target: Object): RecordMethods => {
     if (!Reflect.hasMetadata(MVC_METHOD, target.constructor)) {
@@ -183,6 +184,198 @@ export function HttpPut(route?: string): MethodDecorator {
     Mvc.getRecordMethods(target).put.push({ route, propertyKey })
   }
 }
+
+/**
+ * 参数转换器
+ */
+export abstract class ParameterConverter {
+  abstract cast(value: string | string[] | undefined): any
+}
+/**
+ * 字符串参数转换器，这是默认转换器
+ */
+export class StringParameterConverter extends ParameterConverter {
+  cast(value: string | string[] | undefined): string | undefined {
+    if (Array.isArray(value)) {
+      return value[0]
+    } else if (typeof value === 'string' && value !== '') {
+      return value
+    } else {
+      return undefined
+    }
+  }
+}
+/**
+ * 字符串数组参数转换器
+ */
+export class StringArrayParameterConverter extends ParameterConverter {
+  cast(value: string | string[] | undefined): string[] {
+    if (Array.isArray(value)) {
+      return value
+    } else if (typeof value === 'string' && value !== '') {
+      return [value]
+    } else {
+      return []
+    }
+  }
+}
+/**
+ * 数值参数转换器
+ */
+export class NumberParameterConverter extends ParameterConverter {
+  cast(value: string | string[] | undefined): number | undefined {
+    if (Array.isArray(value)) {
+      return value.length === 0 ? undefined : Number(value[0])
+    } else if (typeof value === 'string' && value !== '') {
+      return Number(value)
+    } else {
+      return undefined
+    }
+  }
+}
+/**
+ * 数值参数数组转换器
+ */
+export class NumberArrayParameterConverter extends ParameterConverter {
+  cast(value: string | string[] | undefined): number[] {
+    if (Array.isArray(value)) {
+      return value.map(val => Number(val))
+    } else if (typeof value === 'string' && value !== '') {
+      return [Number(value)]
+    } else {
+      return []
+    }
+  }
+}
+/**
+ * 布尔值参数转换器
+ */
+export class BooleanParameterConverter extends ParameterConverter {
+  cast(value: string | string[] | undefined): boolean | undefined {
+    if (Array.isArray(value)) {
+      if (value.length === 0) return false
+      else {
+        return value[0] === '' || value[0] === '0' ? false : true
+      }
+    } else if (typeof value === 'string') {
+      return value === '' || value === '0' ? false : true
+    } else {
+      return undefined
+    }
+  }
+}
+
+/**
+ * 布尔值数组参数转换器
+ */
+export class BooleanArrayParameterConverter extends ParameterConverter {
+  cast(value: string | string[] | undefined): boolean[] {
+    if (Array.isArray(value)) {
+      return value.map(val => val === '' || val === '0' ? false : true)
+    } else if (typeof value === 'string') {
+      return [value === '' || value === '0' ? false : true]
+    } else {
+      return []
+    }
+  }
+}
+export type ParameterConverterFn = (ctx: Context, next: Next) => Promise<any> | any
+/**
+ * 参数转换类型
+ */
+export type ParameterConverterType = ParameterConverter | 'str' | 'strs' | 'num' | 'nums' | 'boolean' | 'booleans'
+
+/**
+ * bodyParser 参数
+ * @link https://github.com/koajs/bodyparser/tree/master#options
+ */
+export type BodyParserOptions = Omit<Exclude<Parameters<typeof bodyParser>[0], undefined>, 'encoding'> & { encoding?: string }
+/**
+ * 从查询参数中读取
+ * @returns 
+ */
+export function FromQuery(name: string, converter: ParameterConverterType = 'str'): ParameterDecorator {
+
+  return function (target: Object, propertyKey: string | symbol, parameterIndex: number) {
+    const metakey = `${Mvc.MVC_PARAMETER}:${String(propertyKey)}`
+    const metadata: Record<number, ParameterConverterFn> = Reflect.getMetadata(metakey, target.constructor) || {}
+
+    metadata[parameterIndex] = (ctx: Context) => {
+      let conv: ParameterConverter
+      switch (converter) {
+        case 'strs':
+          conv = new StringArrayParameterConverter()
+          break;
+        case 'num':
+          conv = new NumberParameterConverter()
+          break;
+        case 'nums':
+          conv = new NumberArrayParameterConverter()
+          break;
+        case 'boolean':
+          conv = new BooleanParameterConverter()
+          break;
+        case 'booleans':
+          conv = new BooleanArrayParameterConverter()
+          break;
+        case 'str':
+          conv = new StringParameterConverter()
+          break;
+        default:
+          conv = converter
+          break;
+      }
+      return conv.cast(ctx.query[name])
+    }
+    Reflect.defineMetadata(metakey, metadata, target.constructor)
+  }
+}
+
+/**
+ * 从路径参数中读取
+ * @returns 
+ */
+export function FromRoute(name: string, converter: Extract<ParameterConverterType, 'str' | 'num'> = 'str'): ParameterDecorator {
+
+  return function (target: Object, propertyKey: string | symbol, parameterIndex: number) {
+    const metakey = `${Mvc.MVC_PARAMETER}:${String(propertyKey)}`
+    const metadata: Record<number, ParameterConverterFn> = Reflect.getMetadata(metakey, target.constructor) || {}
+
+    metadata[parameterIndex] = async (ctx: Context) => {
+      let conv: ParameterConverter
+      switch (converter) {
+        case 'num':
+          conv = new NumberParameterConverter()
+          break;
+        case 'str':
+        default:
+          conv = new StringParameterConverter()
+          break;
+      }
+      return conv.cast(ctx.params[name])
+    }
+    Reflect.defineMetadata(metakey, metadata, target.constructor)
+  }
+}
+
+/**
+ * 从body中读取
+ * @param options 参数
+ * @link https://github.com/koajs/bodyparser/tree/master#options
+ * @returns 
+ */
+export function FromBody(options?: BodyParserOptions): ParameterDecorator {
+  return function (target: Object, propertyKey: string | symbol, parameterIndex: number) {
+    const metakey = `${Mvc.MVC_PARAMETER}:${String(propertyKey)}`
+    const metadata: Record<number, ParameterConverterFn> = Reflect.getMetadata(metakey, target.constructor) || {}
+    metadata[parameterIndex] = async (ctx: Context, next: Next) => {
+      await bodyParser(options as any)(ctx, next)
+      return ctx.request.body
+    }
+    Reflect.defineMetadata(metakey, metadata, target.constructor)
+  }
+}
+
 type KoaEasyOptions = {
   logs?: boolean
 }
@@ -212,15 +405,29 @@ export function KoaEasy(options?: KoaEasyOptions) {
       const key = property as RequestMethod
       const arr = methods[key]
       arr.forEach(({ route, propertyKey }) => {
+        const parameters: Record<number, ParameterConverterFn> = Reflect.getMetadata(`${Mvc.MVC_PARAMETER}:${propertyKey}`, controller.cls) || {}
         const path = join(prefix, isNullOrUndefined(route) ? propertyKey : route as string)
         log?.(`${property} ${path}`)
-        Mvc.router[property as RequestMethod](join(path), (ctx: Context, next: Next) => {
+        Mvc.router[property as RequestMethod](join(path), async (ctx: Context, next: Next) => {
           // 获取控制器示例
           const instance = controller.instance()
           // 获取控制器方法
           const fn = instance[propertyKey] as Function | undefined
+          // 设置默认参数
+          const args = [ctx, next]
+          for (const key of Object.keys(parameters)) {
+            const index = Number(key)
+            let value
+            const result = parameters[key](ctx, next)
+            if (result instanceof Promise) {
+              value = await result
+            } else {
+              value = result
+            }
+            args.splice(index, 1, value)
+          }
           // 调用，通过bind设置上下文
-          return fn?.bind(instance)(ctx, next)
+          return fn?.apply(instance, args)
         })
       })
     }

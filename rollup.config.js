@@ -26,7 +26,7 @@ export default defineConfig({
       format: 'es',
     }
   ],
-  // external: ['axios'],
+  external: ['@koa/bodyparser', '@koa/router', 'koa', 'koa-compose'],
   plugins: [
     json(),
     commonjs(),
@@ -35,10 +35,10 @@ export default defineConfig({
       module: 'es2020',
       sourceMap: false,
       compilerOptions: {
-          paths: {
-              '@/*': ['./src/*'],
-          },
-          declaration: false,
+        paths: {
+          '@/*': ['./src/*'],
+        },
+        declaration: false,
       },
     }),
 
