@@ -114,7 +114,15 @@ namespace Mvc {
     }
     return Reflect.getMetadata(MVC_METHOD, target.constructor)
   }
-
+  export function readParams(params, p: TParam) {
+    const name = typeof p === 'string' ? p : p.name
+    const strictCase: boolean = typeof p === 'string' ? true : p.strictCase ?? true
+    if (!strictCase) return params[name]
+    else {
+      const propertyName = Object.keys(params).find(key => key.toLowerCase() === name.toLowerCase())
+      return propertyName ? params[propertyName] : undefined
+    }
+  }
 }
 
 //#region Mvc
@@ -288,17 +296,33 @@ export type ParameterConverterFn = (ctx: Context, next: Next) => Promise<any> | 
 export type ParameterConverterType = ParameterConverter | 'str' | 'strs' | 'num' | 'nums' | 'boolean' | 'booleans'
 
 /**
+ * 参数
+ */
+export type TParam = string | {
+  /**
+   * 参数名
+   */
+  name: string,
+  /**
+   * 参数名严格大小写
+   */
+  strictCase?: boolean
+}
+
+/**
  * bodyParser 参数
  * @link https://github.com/koajs/bodyparser/tree/master#options
  */
 export type BodyParserOptions = Omit<Exclude<Parameters<typeof bodyParser>[0], undefined>, 'encoding'> & { encoding?: string }
 /**
  * 从查询参数中读取
+ * @param name 参数名
+ * @param converter 
+ * @param strictCase 严格参数大小写 
  * @returns 
  */
-export function FromQuery(name: string, converter: ParameterConverterType = 'str'): ParameterDecorator {
-
-  return function (target: Object, propertyKey: string | symbol, parameterIndex: number) {
+export function FromQuery(name: TParam, converter: ParameterConverterType = 'str', strictCase: boolean = false): ParameterDecorator {
+  return function (target: Object, propertyKey: string | symbol | undefined, parameterIndex: number) {
     const metakey = `${Mvc.MVC_PARAMETER}:${String(propertyKey)}`
     const metadata: Record<number, ParameterConverterFn> = Reflect.getMetadata(metakey, target.constructor) || {}
 
@@ -327,7 +351,7 @@ export function FromQuery(name: string, converter: ParameterConverterType = 'str
           conv = converter
           break;
       }
-      return conv.cast(ctx.query[name])
+      return conv.cast(Mvc.readParams(ctx.query, name))
     }
     Reflect.defineMetadata(metakey, metadata, target.constructor)
   }
@@ -337,9 +361,9 @@ export function FromQuery(name: string, converter: ParameterConverterType = 'str
  * 从路径参数中读取
  * @returns 
  */
-export function FromRoute(name: string, converter: Extract<ParameterConverterType, 'str' | 'num'> = 'str'): ParameterDecorator {
+export function FromRoute(name: TParam, converter: Extract<ParameterConverterType, 'str' | 'num'> = 'str'): ParameterDecorator {
 
-  return function (target: Object, propertyKey: string | symbol, parameterIndex: number) {
+  return function (target: Object, propertyKey: string | symbol | undefined, parameterIndex: number) {
     const metakey = `${Mvc.MVC_PARAMETER}:${String(propertyKey)}`
     const metadata: Record<number, ParameterConverterFn> = Reflect.getMetadata(metakey, target.constructor) || {}
 
@@ -354,7 +378,7 @@ export function FromRoute(name: string, converter: Extract<ParameterConverterTyp
           conv = new StringParameterConverter()
           break;
       }
-      return conv.cast(ctx.params[name])
+      return conv.cast(Mvc.readParams(ctx.params, name))
     }
     Reflect.defineMetadata(metakey, metadata, target.constructor)
   }
@@ -367,7 +391,7 @@ export function FromRoute(name: string, converter: Extract<ParameterConverterTyp
  * @returns 
  */
 export function FromBody(options?: BodyParserOptions): ParameterDecorator {
-  return function (target: Object, propertyKey: string | symbol, parameterIndex: number) {
+  return function (target: Object, propertyKey: string | symbol | undefined, parameterIndex: number) {
     const metakey = `${Mvc.MVC_PARAMETER}:${String(propertyKey)}`
     const metadata: Record<number, ParameterConverterFn> = Reflect.getMetadata(metakey, target.constructor) || {}
     metadata[parameterIndex] = async (ctx: Context, next: Next) => {
