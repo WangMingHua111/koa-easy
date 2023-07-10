@@ -116,8 +116,8 @@ namespace Mvc {
   }
   export function readParams(params, p: TParam) {
     const name = typeof p === 'string' ? p : p.name
-    const strictCase: boolean = typeof p === 'string' ? true : p.strictCase ?? true
-    if (!strictCase) return params[name]
+    const strictCase: boolean = typeof p === 'string' ? false : !!p.strictCase
+    if (strictCase) return params[name]
     else {
       const propertyName = Object.keys(params).find(key => key.toLowerCase() === name.toLowerCase())
       return propertyName ? params[propertyName] : undefined
